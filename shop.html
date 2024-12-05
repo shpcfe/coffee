@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shop</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f1f1;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            color: #4e342e;
+            margin-bottom: 20px;
+        }
+
+        .order-button {
+            padding: 10px 20px;
+            background-color: #4e342e;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .order-button:hover {
+            background-color: #6d4c41;
+            transform: translateY(-3px);
+        }
+
+        .order-button:active {
+            transform: translateY(1px);
+        }
+
+        .order-menu {
+            display: none;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-menu li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+            transition: background-color 0.3s;
+        }
+
+        .order-menu li:hover {
+            background-color: #f5f5f5;
+        }
+
+        .order-menu li:last-child {
+            border-bottom: none;
+        }
+
+        .product-form {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+
+        .product-form label {
+            font-weight: bold;
+            color: #4e342e;
+            margin-bottom: 5px;
+        }
+
+        .product-form input {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .price-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .price-label {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .product-form button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .product-form button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Welcome to Our Coffee Shop</h1>
+
+        <div class="order-button">
+            <button type="button" onclick="toggleOrderMenu()">Order Now</button>
+        </div>
+
+        <ul id="orderMenu" class="order-menu">
+            <li onclick="selectProduct('Nescafe', 1)">Nescafe - $1</li>
+            <li onclick="selectProduct('Chips', 1)">Chips - $1</li>
+            <li onclick="selectProduct('Tea', 0.7)">Tea - $0.7</li>
+            
+        </ul>
+
+        <form id="productForm" class="product-form">
+            <label for="name">NAME:</label>
+            <input type="text" id="name" name="name" placeholder="Product Name">
+
+            <label for="price">Price:</label>
+            <div class="price-container">
+                <input type="number" id="price" name="price" placeholder="Price">
+                <span class="price-label">$</span>
+            </div>
+
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" name="quantity" placeholder="Enter quantity" required>
+
+            <button type="button" onclick="submitForm()">Add</button>
+        </form>
+    </div>
+
+    <script>
+        function toggleOrderMenu() {
+            const menu = document.getElementById('orderMenu');
+            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+        }
+
+        function selectProduct(name, price) {
+            document.getElementById('name').value = name;
+            document.getElementById('price').value = price;
+            toggleOrderMenu(); 
+        }
+
+        async function submitForm() {
+            const name = document.getElementById('name').value;
+            const price = document.getElementById('price').value;
+            const quantity = document.getElementById('quantity').value;
+
+            if (!name || !price || !quantity) {
+                alert('Please fill in all the fields.');
+                return;
+            }
+
+           const url = 'https://script.google.com/macros/s/AKfycbx3TEqovXY4ecSRQoiBCMsrp_X7Nn7WFX1V2dfjQAqFl2N06YST7SOlInGyeLeNz61Y/exec';
+
+            const data = new URLSearchParams();
+            data.append('name', name);
+            data.append('price', price);
+            data.append('quantity', quantity);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: data,
+                });
+
+                if (response.ok) {
+                    alert('Data added successfully!');
+                    document.getElementById('productForm').reset();
+                } else {
+                    throw new Error('Failed to add data');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('There was an error adding the data.');
+            }
+        }
+    </script>
+</body>
+</html>

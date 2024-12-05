@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Coffee Orders</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #4e342e;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background-color: #ffffff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #6d4c41;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin: 0 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button.delete {
+      background-color: #f44336;
+    }
+
+    button.edit {
+      background-color: #2196F3;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .message {
+      text-align: center;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    .message.success {
+      color: green;
+    }
+
+    .message.error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Coffee Orders</h1>
+  <div id="message" class="message"></div>
+  <table id="data-table">
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbx9goI2w_go_GXv-VyZIdEGCBq5zSQfuBizUw6S9IaUM9o-SPpCG-HthwmlpKrVIp4F7w/exec';
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      if (isNaN(date)) return 'Invalid date';
+      const datePart = date.toISOString().split('T')[0];
+      const timePart = date.toTimeString().split(' ')[0];
+      return `${datePart} ${timePart}`;
+    }
+
+    async function fetchData() {
+      try {
+        const response = await fetch(scriptURL, {
+          method: 'POST',
+          body: new URLSearchParams({ action: 'fetch' }),
+        });
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          renderTable(data);
+        } else {
+          console.error('Invalid data format:', data);
+          showMessage('Error: Invalid data format.', 'error');
+        }
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        showMessage('Failed to fetch data.', 'error');
+      }
+    }
+
+    function renderTable(data) {
+      const tbody = document.querySelector("#data-table tbody");
+      tbody.innerHTML = "";
+
+      data.forEach((row, index) => {
+        if (row.length < 4) return;
+        const priceWithDollar = row[2] ? `$${row[2]}` : "";
+        const formattedDate = formatDate(row[0]);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${formattedDate}</td>
+          <td>${row[1]}</td>
+          <td>${priceWithDollar}</td>
+          <td>${row[3]}</td>
+          <td>
+            <button class="edit" onclick="editRow(${index})">Edit</button>
+            <button class="delete" onclick="deleteRow(${index})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function editRow(index) {
+      const name = prompt('Enter new name:', '');
+      const price = prompt('Enter new price:', '');
+      const quantity = prompt('Enter new quantity:', '');
+
+      if (name === null || price === null || quantity === null) return; 
+
+
+      try {
+        const response = await fetch(scriptURL, {
+          method: 'POST',
+          body: new URLSearchParams({
+            action: 'update',
+            rowIndex: index,
+            name: name,
+            price: price,
+            quantity: quantity,
+          }),
+        });
+
+        if (response.ok) {
+          showMessage('Row updated successfully.', 'success');
+          fetchData(); 
+
+        } else {
+          showMessage('Failed to update row.', 'error');
+        }
+      } catch (error) {
+        console.error('Failed to update data:', error);
+        showMessage('Failed to update row.', 'error');
+      }
+    }
+
+    async function deleteRow(index) {
+      const confirmation = confirm('Are you sure you want to delete this row?');
+      if (!confirmation) return;
+
+      try {
+        const response = await fetch(scriptURL, {
+          method: 'POST',
+          body: new URLSearchParams({
+            action: 'delete',
+            rowIndex: index,
+          }),
+        });
+
+        if (response.ok) {
+          showMessage('Row deleted successfully.', 'success');
+          fetchData(); 
+
+        } else {
+          showMessage('Failed to delete row.', 'error');
+        }
+      } catch (error) {
+        console.error('Failed to delete data:', error);
+        showMessage('Failed to delete row.', 'error');
+      }
+    }
+
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      setTimeout(() => {
+        messageDiv.textContent = '';
+        messageDiv.classList.remove(type);
+      }, 3000);
+    }
+
+    setInterval(fetchData, 10000);
+    document.addEventListener("DOMContentLoaded", fetchData);
+  </script>
+</body>
+</html>
